@@ -1,0 +1,74 @@
+<MudPaper Class="pa-4" Elevation="2">
+    <MudText Typo="Typo.h6" Class="mb-3">Filters</MudText>
+
+    <MudTextField @bind-Value="_filter.SearchText" Label="Search games..." Variant="Variant.Outlined"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                  Clearable="true" OnClearButtonClick="HandleApply" DebounceInterval="300"
+                  OnDebounceIntervalElapsed="HandleApply" Class="mb-4" />
+
+    <MudSelect T="string" Label="Genre" MultiSelection="true" @bind-SelectedValues="_selectedGenres"
+               Variant="Variant.Outlined" Class="mb-4"
+               Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Category">
+        @foreach (var genre in AllGenres)
+        {
+            <MudSelectItem Value="@genre">@genre</MudSelectItem>
+        }
+    </MudSelect>
+
+    <MudSelect T="string" Label="Platform" MultiSelection="true" @bind-SelectedValues="_selectedPlatforms"
+               Variant="Variant.Outlined" Class="mb-4"
+               Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Computer">
+        @foreach (var platform in AllPlatforms)
+        {
+            <MudSelectItem Value="@platform">@platform</MudSelectItem>
+        }
+    </MudSelect>
+
+    <MudText Typo="Typo.body2" Class="mb-1">Min Rating: @_filter.MinRating.ToString("F1")</MudText>
+    <MudSlider T="double" @bind-Value="_filter.MinRating" Min="0" Max="10" Step="0.5" Class="mb-2" />
+    <MudText Typo="Typo.body2" Class="mb-1">Max Rating: @_filter.MaxRating.ToString("F1")</MudText>
+    <MudSlider T="double" @bind-Value="_filter.MaxRating" Min="0" Max="10" Step="0.5" Class="mb-4" />
+
+    <MudSelect T="string" Label="Sort by" @bind-Value="_filter.SortBy" Variant="Variant.Outlined" Class="mb-3">
+        <MudSelectItem Value="@("Title")">Title</MudSelectItem>
+        <MudSelectItem Value="@("Rating")">Rating</MudSelectItem>
+        <MudSelectItem Value="@("ReleaseYear")">Release Year</MudSelectItem>
+    </MudSelect>
+
+    <MudCheckBox @bind-Value="_filter.SortDescending" Label="Descending" Class="mb-4" />
+
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="HandleApply" FullWidth="true">
+            Apply
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="HandleReset" FullWidth="true">
+            Reset
+        </MudButton>
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter] public IReadOnlyList<string> AllGenres { get; set; } = [];
+    [Parameter] public IReadOnlyList<string> AllPlatforms { get; set; } = [];
+    [Parameter] public EventCallback<GameFilter> OnApply { get; set; }
+    [Parameter] public EventCallback OnReset { get; set; }
+
+    private GameFilter _filter = new();
+    private IReadOnlyCollection<string> _selectedGenres = [];
+    private IReadOnlyCollection<string> _selectedPlatforms = [];
+
+    private async Task HandleApply()
+    {
+        _filter.Genres = [.. _selectedGenres];
+        _filter.Platforms = [.. _selectedPlatforms];
+        await OnApply.InvokeAsync(_filter);
+    }
+
+    private async Task HandleReset()
+    {
+        _filter = new GameFilter();
+        _selectedGenres = [];
+        _selectedPlatforms = [];
+        await OnReset.InvokeAsync();
+    }
+}

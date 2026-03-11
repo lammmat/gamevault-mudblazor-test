@@ -1,0 +1,48 @@
+# Build output
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+# Visual Studio Code
+.vscode/settings.json
+
+# NuGet
+*.nupkg
+*.snupkg
+project.lock.json
+packages/
+nuget.config
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# MAUI / Android
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# MAUI WebView2 runtime data (created when running the desktop app)
+**/*.WebView2/
+
+# Rider
+.idea/
+
+# Logs
+*.log

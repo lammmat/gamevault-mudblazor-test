@@ -1,0 +1,84 @@
+@page "/catalog"
+@inject IGameService GameService
+@inject NavigationManager Nav
+
+<PageTitle>GameVault – Game Catalog</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Game Catalog</MudText>
+
+<MudGrid>
+    <MudItem xs="12" md="3">
+        <CatalogFilterPanel AllGenres="_allGenres" AllPlatforms="_allPlatforms"
+                            OnApply="LoadGames" OnReset="ResetGames" />
+    </MudItem>
+
+    <MudItem xs="12" md="9">
+        <div class="d-flex justify-space-between align-center mb-3">
+            <MudText Typo="Typo.body1" Color="Color.Secondary">
+                @_games.Count game@(_games.Count == 1 ? "" : "s") found
+            </MudText>
+            <MudToggleGroup T="string" @bind-Value="_viewMode" SelectionMode="SelectionMode.SingleSelection" Outlined="true">
+                <MudToggleItem Value="@("grid")"><MudIcon Icon="@Icons.Material.Filled.GridView" /></MudToggleItem>
+                <MudToggleItem Value="@("list")"><MudIcon Icon="@Icons.Material.Filled.ViewList" /></MudToggleItem>
+            </MudToggleGroup>
+        </div>
+
+        @if (_loading)
+        {
+            <MudGrid>
+                @for (int i = 0; i < 6; i++)
+                {
+                    <MudItem xs="12" sm="6" lg="4">
+                        <MudCard Elevation="2">
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px" />
+                            <MudCardContent>
+                                <MudSkeleton Width="70%" Class="mb-2" />
+                                <MudSkeleton Width="40%" />
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+        else if (_viewMode == "grid")
+        {
+            <GameGrid Games="_games" OnGameClick="NavigateToGame" />
+        }
+        else
+        {
+            <GameListView Games="_games" OnGameClick="NavigateToGame" />
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<Game> _games = [];
+    private bool _loading = true;
+    private string _viewMode = "grid";
+    private IReadOnlyList<string> _allGenres = [];
+    private IReadOnlyList<string> _allPlatforms = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _allGenres = GameService.GetAllGenres();
+        _allPlatforms = GameService.GetAllPlatforms();
+        await LoadGames(new GameFilter());
+    }
+
+    private async Task LoadGames(GameFilter filter)
+    {
+        _loading = true;
+        _games = await GameService.GetGamesAsync(filter);
+        _loading = false;
+    }
+
+    private async Task ResetGames()
+    {
+        _loading = true;
+        _games = await GameService.GetGamesAsync();
+        _loading = false;
+    }
+
+    private void NavigateToGame(int id) => Nav.NavigateTo($"/catalog/{id}");
+}
+

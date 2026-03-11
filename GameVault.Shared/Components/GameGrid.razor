@@ -1,0 +1,13 @@
+<MudGrid>
+    @foreach (var game in Games)
+    {
+        <MudItem xs="12" sm="6" lg="4">
+            <GameCard Game="@game" OnClick="OnGameClick" />
+        </MudItem>
+    }
+</MudGrid>
+
+@code {
+    [Parameter] public List<Game> Games { get; set; } = [];
+    [Parameter] public EventCallback<int> OnGameClick { get; set; }
+}

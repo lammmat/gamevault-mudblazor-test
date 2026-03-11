@@ -1,0 +1,52 @@
+<MudTable T="Game" Items="Games" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="2"
+          OnRowClick="@((TableRowClickEventArgs<Game> args) => OnGameClick.InvokeAsync(args.Item!.Id))"
+          RowStyle="cursor:pointer">
+    <HeaderContent>
+        <MudTh>Title</MudTh>
+        <MudTh>Developer</MudTh>
+        <MudTh>Year</MudTh>
+        <MudTh>Genres</MudTh>
+        <MudTh>Platforms</MudTh>
+        <MudTh>Rating</MudTh>
+        <MudTh>Status</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Title"><b>@context.Title</b></MudTd>
+        <MudTd DataLabel="Developer">@context.Developer</MudTd>
+        <MudTd DataLabel="Year">@context.ReleaseYear</MudTd>
+        <MudTd DataLabel="Genres">
+            @foreach (var g in context.Genres.Take(2))
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Class="mr-1">@g</MudChip>
+            }
+        </MudTd>
+        <MudTd DataLabel="Platforms">
+            @foreach (var p in context.Platforms.Take(2))
+            {
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Class="mr-1">@p</MudChip>
+            }
+        </MudTd>
+        <MudTd DataLabel="Rating">
+            <MudRating ReadOnly="true" SelectedValue="@((int)Math.Round(context.Rating / 2))" MaxValue="5" Size="Size.Small" />
+            <MudText Typo="Typo.caption">@context.Rating.ToString("F1")</MudText>
+        </MudTd>
+        <MudTd DataLabel="Status">
+            <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)" Variant="Variant.Filled">
+                @context.Status
+            </MudChip>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    [Parameter] public List<Game> Games { get; set; } = [];
+    [Parameter] public EventCallback<int> OnGameClick { get; set; }
+
+    private static Color StatusColor(GameStatus status) => status switch
+    {
+        GameStatus.Playing   => Color.Info,
+        GameStatus.Completed => Color.Success,
+        GameStatus.Dropped   => Color.Error,
+        _                    => Color.Warning
+    };
+}

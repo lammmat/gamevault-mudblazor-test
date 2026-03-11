@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="GameVault.Maui/GameVault.Maui.csproj" />
+  <Project Path="GameVault.Shared/GameVault.Shared.csproj" />
+  <Project Path="GameVault.Web/GameVault.Web.csproj" />
+</Solution>

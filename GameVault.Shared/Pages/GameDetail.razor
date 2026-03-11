@@ -1,0 +1,161 @@
+@page "/catalog/{Id:int}"
+@inject IGameService GameService
+@inject NavigationManager Nav
+
+<PageTitle>@(_game?.Title ?? "Game Detail") – GameVault</PageTitle>
+
+@if (_loading)
+{
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" />
+        </MudItem>
+        <MudItem xs="12" md="8">
+            <MudSkeleton Width="60%" Height="40px" Class="mb-3" />
+            <MudSkeleton Width="40%" Class="mb-2" />
+            <MudSkeleton Width="100%" Class="mb-1" />
+            <MudSkeleton Width="100%" Class="mb-1" />
+            <MudSkeleton Width="80%" />
+        </MudItem>
+    </MudGrid>
+}
+else if (_game is null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">Game not found.</MudAlert>
+    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.ArrowBack" Href="/catalog">
+        Back to Catalog
+    </MudButton>
+}
+else
+{
+    <MudBreadcrumbs Items="_breadcrumbs" Class="mb-4 pa-0" />
+
+    <MudGrid>
+        <!-- Cover art placeholder -->
+        <MudItem xs="12" md="4" lg="3">
+            <MudPaper Elevation="4" Style="overflow:hidden; border-radius:12px;">
+                <div style="background: linear-gradient(135deg, #1e1e2d 0%, #2d2d4e 50%, #3d2d5e 100%);
+                            height: 380px; display:flex; flex-direction:column;
+                            align-items:center; justify-content:center; padding:24px; text-align:center;">
+                    <MudIcon Icon="@Icons.Material.Filled.VideogameAsset" Size="Size.Large"
+                             Style="font-size:64px; color:#7e6fff; margin-bottom:16px;" />
+                    <MudText Typo="Typo.h6" Style="color:white; word-break:break-word;">@_game.Title</MudText>
+                    <MudText Typo="Typo.caption" Style="color:#aaa; margin-top:8px;">@_game.ReleaseYear</MudText>
+                </div>
+            </MudPaper>
+
+            <MudPaper Class="pa-3 mt-3" Elevation="2">
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Your Status</MudText>
+                <MudChip T="string" Color="@GetStatusColor(_game.Status)" Variant="Variant.Filled" Size="Size.Medium" Style="width:100%">
+                    @_game.Status
+                </MudChip>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Game details -->
+        <MudItem xs="12" md="8" lg="9">
+            <div class="d-flex align-start justify-space-between flex-wrap gap-2 mb-2">
+                <MudText Typo="Typo.h4"><b>@_game.Title</b></MudText>
+                <MudChip T="string" Color="Color.Warning" Icon="@Icons.Material.Filled.Star" Size="Size.Large">
+                    @_game.Rating.ToString("F1") / 10
+                </MudChip>
+            </div>
+
+            <MudText Typo="Typo.subtitle1" Color="Color.Secondary" Class="mb-1">
+                @_game.Developer
+                @if (_game.Developer != _game.Publisher)
+                {
+                    <span> · Published by @_game.Publisher</span>
+                }
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">Released: @_game.ReleaseYear</MudText>
+
+            <div class="mb-1">
+                <MudRating ReadOnly="true" SelectedValue="@((int)Math.Round(_game.Rating / 2))" MaxValue="5" Size="Size.Large" />
+            </div>
+
+            <MudDivider Class="my-4" />
+
+            <MudText Typo="Typo.subtitle1" Class="mb-2"><b>Genres</b></MudText>
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                @foreach (var genre in _game.Genres)
+                {
+                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Medium">@genre</MudChip>
+                }
+            </div>
+
+            <MudText Typo="Typo.subtitle1" Class="mb-2"><b>Platforms</b></MudText>
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                @foreach (var platform in _game.Platforms)
+                {
+                    <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined" Size="Size.Medium"
+                             Icon="@GetPlatformIcon(platform)">@platform</MudChip>
+                }
+            </div>
+
+            <MudText Typo="Typo.subtitle1" Class="mb-2"><b>Tags</b></MudText>
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                @foreach (var tag in _game.Tags)
+                {
+                    <MudChip T="string" Variant="Variant.Text" Size="Size.Small">@tag</MudChip>
+                }
+            </div>
+
+            <MudExpansionPanels Elevation="2">
+                <MudExpansionPanel Text="About this game" Expanded="true">
+                    <MudText Typo="Typo.body1">@_game.Description</MudText>
+                </MudExpansionPanel>
+                <MudExpansionPanel Text="Game Details">
+                    <MudSimpleTable>
+                        <tbody>
+                            <tr><td><b>Developer</b></td><td>@_game.Developer</td></tr>
+                            <tr><td><b>Publisher</b></td><td>@_game.Publisher</td></tr>
+                            <tr><td><b>Release Year</b></td><td>@_game.ReleaseYear</td></tr>
+                            <tr><td><b>Rating</b></td><td>@_game.Rating / 10</td></tr>
+                            <tr><td><b>Platforms</b></td><td>@string.Join(", ", _game.Platforms)</td></tr>
+                        </tbody>
+                    </MudSimpleTable>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Game? _game;
+    private bool _loading = true;
+    private List<BreadcrumbItem> _breadcrumbs = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _game = await GameService.GetByIdAsync(Id);
+        _breadcrumbs =
+        [
+            new BreadcrumbItem("Home", href: "/"),
+            new BreadcrumbItem("Catalog", href: "/catalog"),
+            new BreadcrumbItem(_game?.Title ?? "Not Found", href: null, disabled: true)
+        ];
+        _loading = false;
+    }
+
+    private Color GetStatusColor(GameStatus status) => status switch
+    {
+        GameStatus.Playing => Color.Info,
+        GameStatus.Completed => Color.Success,
+        GameStatus.Dropped => Color.Error,
+        _ => Color.Warning
+    };
+
+    private string GetPlatformIcon(string platform) => platform switch
+    {
+        "PC" => Icons.Material.Filled.Computer,
+        "PlayStation" => Icons.Material.Filled.Gamepad,
+        "Xbox" => Icons.Material.Filled.SportsEsports,
+        "Nintendo Switch" => Icons.Material.Filled.VideogameAsset,
+        "Mobile" => Icons.Material.Filled.PhoneAndroid,
+        _ => Icons.Material.Filled.Devices
+    };
+}
