@@ -4,7 +4,7 @@ namespace GameVault.Shared.Services;
 
 public class MockGameService : IGameService
 {
-    private static readonly List<Game> _games =
+    private readonly List<Game> _games =
     [
         new() { Id = 1, Title = "Neon Blade: Origins", Developer = "Synth Studios", Publisher = "Apex Digital", ReleaseYear = 2023, Rating = 8.5, Genres = ["Action", "RPG"], Platforms = ["PC", "PlayStation"], Tags = ["Singleplayer", "Cyberpunk", "Open World"], Status = GameStatus.Completed, Description = "A gritty cyberpunk action RPG set in a neon-drenched megacity where you play as a rogue street samurai uncovering a corporate conspiracy." },
         new() { Id = 2, Title = "Kingdom's Fall", Developer = "Irongate Games", Publisher = "Irongate Games", ReleaseYear = 2022, Rating = 9.2, Genres = ["Strategy"], Platforms = ["PC"], Tags = ["4X", "Turn-Based", "Multiplayer"], Status = GameStatus.Playing, Description = "A sweeping grand strategy game where you lead a medieval empire from humble beginnings to continental dominance across centuries." },
@@ -104,4 +104,18 @@ public class MockGameService : IGameService
 
     public IReadOnlyList<string> GetAllPlatforms() =>
         _games.SelectMany(g => g.Platforms).Distinct().OrderBy(p => p).ToList();
+
+    public Task UpdateStatusAsync(int id, GameStatus status)
+    {
+        var game = _games.FirstOrDefault(g => g.Id == id);
+        if (game is not null) game.Status = status;
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateRatingAsync(int id, double rating)
+    {
+        var game = _games.FirstOrDefault(g => g.Id == id);
+        if (game is not null) game.Rating = rating;
+        return Task.CompletedTask;
+    }
 }

@@ -9,4 +9,6 @@ public interface IGameService
     Task<GameStats> GetStatsAsync();
     IReadOnlyList<string> GetAllGenres();
     IReadOnlyList<string> GetAllPlatforms();
+    Task UpdateStatusAsync(int id, GameStatus status);
+    Task UpdateRatingAsync(int id, double rating);
 }
