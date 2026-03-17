@@ -1,5 +1,6 @@
-using GameVault.Maui.Services;
+using GameVault.Shared.Data;
 using GameVault.Shared.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MudBlazor.Services;
 
@@ -7,9 +8,6 @@ namespace GameVault.Maui;
 
 public static class MauiProgram
 {
-    // Change this to match where GameVault.Web is running (http for local dev to avoid cert issues)
-    private const string ApiBaseUrl = "http://localhost:5000/";
-
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
@@ -23,15 +21,30 @@ public static class MauiProgram
         builder.Services.AddMauiBlazorWebView();
         builder.Services.AddMudServices();
 
-        builder.Services.AddSingleton(sp =>
-            new HttpClient { BaseAddress = new Uri(ApiBaseUrl) });
-        builder.Services.AddSingleton<IGameService, HttpGameService>();
+        var dbPath = GameVaultDb.GetDbPath();
+        builder.Services.AddDbContextFactory<GameDbContext>(options =>
+            options.UseSqlite($"Data Source={dbPath}"));
+        builder.Services.AddSingleton<IGameService, EfGameService>();
 
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();
         builder.Logging.AddDebug();
 #endif
 
-        return builder.Build();
+        var app = builder.Build();
+
+        // Ensure DB is created and seed if empty
+        var factory = app.Services.GetRequiredService<IDbContextFactory<GameDbContext>>();
+        using var db = factory.CreateDbContext();
+        db.Database.EnsureCreated();
+        if (!db.Games.Any())
+        {
+            var seed = new MockGameService();
+            var games = seed.GetGamesAsync().GetAwaiter().GetResult();
+            db.Games.AddRange(games);
+            db.SaveChanges();
+        }
+
+        return app;
     }
 }

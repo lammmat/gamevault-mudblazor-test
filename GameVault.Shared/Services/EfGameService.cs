@@ -1,14 +1,14 @@
+using GameVault.Shared.Data;
 using GameVault.Shared.Models;
-using GameVault.Shared.Services;
-using GameVault.Web.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace GameVault.Web.Services;
+namespace GameVault.Shared.Services;
 
-public class EfGameService(GameDbContext db) : IGameService
+public class EfGameService(IDbContextFactory<GameDbContext> dbFactory) : IGameService
 {
     public async Task<List<Game>> GetGamesAsync(GameFilter? filter = null)
     {
+        using var db = await dbFactory.CreateDbContextAsync();
         var games = await db.Games.ToListAsync();
         var query = games.AsEnumerable();
 
@@ -42,11 +42,15 @@ public class EfGameService(GameDbContext db) : IGameService
         return query.ToList();
     }
 
-    public async Task<Game?> GetByIdAsync(int id) =>
-        await db.Games.FindAsync(id);
+    public async Task<Game?> GetByIdAsync(int id)
+    {
+        using var db = await dbFactory.CreateDbContextAsync();
+        return await db.Games.FindAsync(id);
+    }
 
     public async Task<GameStats> GetStatsAsync()
     {
+        using var db = await dbFactory.CreateDbContextAsync();
         var games = await db.Games.ToListAsync();
         return new GameStats
         {
@@ -69,22 +73,29 @@ public class EfGameService(GameDbContext db) : IGameService
         };
     }
 
-    public IReadOnlyList<string> GetAllGenres() =>
-        db.Games.AsEnumerable()
+    public IReadOnlyList<string> GetAllGenres()
+    {
+        using var db = dbFactory.CreateDbContext();
+        return db.Games.AsEnumerable()
             .SelectMany(g => g.Genres)
             .Distinct()
             .OrderBy(g => g)
             .ToList();
+    }
 
-    public IReadOnlyList<string> GetAllPlatforms() =>
-        db.Games.AsEnumerable()
+    public IReadOnlyList<string> GetAllPlatforms()
+    {
+        using var db = dbFactory.CreateDbContext();
+        return db.Games.AsEnumerable()
             .SelectMany(g => g.Platforms)
             .Distinct()
             .OrderBy(p => p)
             .ToList();
+    }
 
     public async Task UpdateStatusAsync(int id, GameStatus status)
     {
+        using var db = await dbFactory.CreateDbContextAsync();
         var game = await db.Games.FindAsync(id);
         if (game is null) return;
         game.Status = status;
@@ -93,6 +104,7 @@ public class EfGameService(GameDbContext db) : IGameService
 
     public async Task UpdateRatingAsync(int id, double rating)
     {
+        using var db = await dbFactory.CreateDbContextAsync();
         var game = await db.Games.FindAsync(id);
         if (game is null) return;
         game.Rating = rating;

@@ -1,7 +1,7 @@
 using GameVault.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace GameVault.Web.Data;
+namespace GameVault.Shared.Data;
 
 public class GameDbContext(DbContextOptions<GameDbContext> options) : DbContext(options)
 {

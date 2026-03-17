@@ -2,6 +2,11 @@
 bin/
 obj/
 
+# Local database
+gamevault.db
+gamevault.db-shm
+gamevault.db-wal
+
 # User-specific files
 *.user
 *.suo

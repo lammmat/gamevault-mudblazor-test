@@ -1,16 +1,15 @@
+using GameVault.Shared.Data;
 using GameVault.Shared.Models;
 using GameVault.Shared.Services;
 using GameVault.Web.Components;
-using GameVault.Web.Data;
-using GameVault.Web.Services;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddMudServices();
-builder.Services.AddDbContext<GameDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=gamevault.db"));
+builder.Services.AddDbContextFactory<GameDbContext>(options =>
+    options.UseSqlite($"Data Source={GameVaultDb.GetDbPath()}"));
 builder.Services.AddScoped<IGameService, EfGameService>();
 
 builder.Services.AddRazorComponents()
@@ -21,7 +20,8 @@ var app = builder.Build();
 // Ensure DB is created and seed if empty
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<GameDbContext>();
+    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<GameDbContext>>();
+    using var db = factory.CreateDbContext();
     db.Database.EnsureCreated();
     if (!db.Games.Any())
     {
