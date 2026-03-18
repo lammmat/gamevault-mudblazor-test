@@ -9,6 +9,7 @@ This project serves as a hands-on playground for a React developer getting famil
 - **MudBlazor** (Material Design component library for Blazor — think MUI for .NET)
 - **Blazor** (React-like component model, but C# instead of JavaScript)
 - **MAUI Blazor Hybrid** (same Blazor components running natively on desktop via WebView)
+- **EF Core + SQLite** (persistent local storage — no external server needed)
 
 ## Architecture
 
@@ -16,15 +17,72 @@ This project serves as a hands-on playground for a React developer getting famil
 GameVault.slnx
 ├── GameVault.Shared      ← ALL UI lives here (Razor Class Library)
 │   ├── Models/           Data models (Game, GameFilter, GameStats, GameStatus)
-│   ├── Services/         IGameService + MockGameService (30 games, no backend needed)
-│   ├── Layout/           MainLayout.razor (AppBar, Drawer, dark/light mode)
+│   ├── Services/         IGameService · EfGameService (SQLite) · MockGameService (fallback)
+│   ├── Data/             GameDbContext (EF Core) · GameVaultDb (shared DB path resolver)
+│   ├── Theme/            GameVaultTheme.cs — central MudTheme (Design System Pillar 1)
+│   ├── wwwroot/css/      gamevault.css — CSS variables + effects (Design System Pillar 2)
+│   ├── Layout/           MainLayout.razor (AppBar, Drawer, dark/light mode toggle)
 │   └── Pages/            Dashboard, Catalog, GameDetail, NotFound
 │
-├── GameVault.Web         ← Blazor Web App host (thin wrapper for the browser)
-└── GameVault.Maui        ← MAUI Blazor Hybrid host (thin wrapper for native desktop)
+├── GameVault.Web         ← Blazor Web App host + Minimal API (7 REST endpoints)
+└── GameVault.Maui        ← MAUI Blazor Hybrid host (standalone, no web server needed)
 ```
 
-The key idea: **write once, run everywhere**. `GameVault.Shared` contains every page and component. Both `GameVault.Web` and `GameVault.Maui` just wire up dependency injection and host the Blazor WebView.
+The key idea: **write once, run everywhere**. `GameVault.Shared` contains every page and component. Both `GameVault.Web` and `GameVault.Maui` wire up their own SQLite database and host the Blazor WebView — they share the same `gamevault.db` file at the repo root, so edits in one app are visible in the other.
+
+## Data & Backend
+
+Both apps use **EF Core 10 + SQLite** via `EfGameService`. There is no external server.
+
+| | Web (`GameVault.Web`) | MAUI (`GameVault.Maui`) |
+|---|---|---|
+| Transport | In-process EF Core | In-process EF Core |
+| DB path | `gamevault.db` at repo root | same `gamevault.db` at repo root |
+| API | 7 Minimal API endpoints (`/api/games/…`) | not needed — direct service call |
+| First run | Seeds from `MockGameService` (30 games) | same seed logic |
+
+The database file (`gamevault.db`) is git-ignored. Delete it to re-seed from scratch.
+
+### Minimal API endpoints (Web only)
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET` | `/api/games` | List games (search, filter, sort) |
+| `GET` | `/api/games/{id}` | Get single game |
+| `POST` | `/api/games/{id}/status` | Update play status |
+| `POST` | `/api/games/{id}/rating` | Update rating |
+| `GET` | `/api/games/genres` | All distinct genres |
+| `GET` | `/api/games/platforms` | All distinct platforms |
+| `GET` | `/api/games/stats` | Dashboard statistics |
+
+## Design System — "VAULT OS"
+
+The UI uses a custom **VAULT OS** aesthetic: deep near-black backgrounds, electric teal glows, Orbitron headings. The design system has two central files — edit either to restyle the entire app:
+
+### Pillar 1 — `GameVault.Shared/Theme/GameVaultTheme.cs`
+Central C# class exposing `MudTheme Theme`. Change a value here → all MudBlazor components update instantly.
+
+```csharp
+// Key tokens (also mirrored as CSS variables):
+public const string PrimaryColor   = "#00E5CC"; // electric teal
+public const string SecondaryColor = "#FF4D5A"; // vivid coral
+public const string BgVoid         = "#08080F"; // page background
+```
+
+### Pillar 2 — `GameVault.Shared/wwwroot/css/gamevault.css`
+CSS custom properties that mirror the theme tokens, plus utility classes and effects.
+
+```css
+/* Key utility classes: */
+.gv-card-hover     /* lift + teal glow on hover */
+.gv-stat-card      /* gradient accent strip at top */
+.gv-section-title  /* primary-color left-border accent */
+.gv-cover-art      /* game cover placeholder with radial glow */
+```
+
+Dark / light mode is driven by a `gv-dark` class toggled on `<html>` via JS interop — `:root` holds dark defaults and `html:not(.gv-dark)` overrides for light mode. MudBlazor's `PaletteDark` / `PaletteLight` stay in sync automatically.
+
+**Fonts:** [Orbitron](https://fonts.google.com/specimen/Orbitron) (headings, buttons) + [Nunito](https://fonts.google.com/specimen/Nunito) (body)
 
 ## Prerequisites
 
@@ -56,11 +114,11 @@ dotnet run --project GameVault.Maui -f net10.0-windows10.0.19041.0
 
 ## Pages
 
-| Route           | Description                                                                         |
-| --------------- | ----------------------------------------------------------------------------------- |
-| `/`             | **Dashboard** — stat cards, genre donut chart, platform bar chart, status breakdown |
-| `/catalog`      | **Game Catalog** — search, filter by genre/platform/rating, toggle grid ↔ list view |
-| `/catalog/{id}` | **Game Detail** — full info, genres/tags as chips, expandable sections              |
+| Route           | Description                                                                              |
+| --------------- | ---------------------------------------------------------------------------------------- |
+| `/`             | **Dashboard** — stat cards, genre/platform bars, status breakdown, quick action buttons  |
+| `/catalog`      | **Game Catalog** — search, filter by genre/platform/rating, toggle grid ↔ list view      |
+| `/catalog/{id}` | **Game Detail** — full info, **editable status & star rating** (persisted to SQLite)     |
 
 ## MudBlazor Components Used
 
@@ -69,7 +127,6 @@ dotnet run --project GameVault.Maui -f net10.0-windows10.0.19041.0
 | `MudAppBar`, `MudDrawer`, `MudNavMenu`     | Layout navigation                 |
 | `MudThemeProvider`                         | Dark / light mode toggle          |
 | `MudPaper`, `MudCard`                      | Stat cards, game cards            |
-| `MudChart`                                 | Genre donut + platform bar chart  |
 | `MudTable`                                 | List view in catalog              |
 | `MudTextField`, `MudSelect`                | Search & filter inputs            |
 | `MudSlider`                                | Rating range filter               |
@@ -78,6 +135,7 @@ dotnet run --project GameVault.Maui -f net10.0-windows10.0.19041.0
 | `MudBreadcrumbs`                           | Navigation trail                  |
 | `MudSkeleton`                              | Loading states                    |
 | `MudProgressLinear`                        | Status breakdown bars             |
+| `MudSnackbar`                              | Save confirmation toasts          |
 | `MudSnackbarProvider`, `MudDialogProvider` | Global providers in layout        |
 
 ## React → Blazor Cheatsheet
@@ -91,13 +149,5 @@ dotnet run --project GameVault.Maui -f net10.0-windows10.0.19041.0
 | `<Link to="/catalog">`       | `<MudNavLink Href="/catalog">`                                           |
 | React Router `useParams`     | `[Parameter] public int Id { get; set; }` on `@page "/catalog/{Id:int}"` |
 | `npm install mudblazor`      | `dotnet add package MudBlazor`                                           |
-| `tailwind.config.js`         | `MudTheme` with `PaletteDark` / `PaletteLight`                           |
-
-## Mock Data
-
-The app ships with 30 fictional games in `MockGameService.cs` — no backend, no database. The `IGameService` interface makes it easy to swap in a real HTTP API later:
-
-```csharp
-// Swap mock for a real API client:
-builder.Services.AddScoped<IGameService, GameApiClient>();
-```
+| `tailwind.config.js`         | `GameVaultTheme.cs` (C# tokens) + `gamevault.css` (CSS variables)        |
+| `localStorage` / `IndexedDB` | EF Core + SQLite via `IDbContextFactory<GameDbContext>`                   |
