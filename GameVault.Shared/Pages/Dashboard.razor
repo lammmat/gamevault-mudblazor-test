@@ -3,7 +3,7 @@
 
 <PageTitle>GameVault – Dashboard</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-6">Dashboard</MudText>
+<MudText Typo="Typo.h4" Class="mb-6 gv-section-title">Dashboard</MudText>
 
 @if (_stats is null)
 {
@@ -22,41 +22,41 @@ else
 {
     <MudGrid>
         <MudItem xs="12" sm="6" md="3">
-            <MudPaper Class="pa-4 d-flex align-center gap-4" Elevation="2" Style="border-left: 4px solid var(--mud-palette-primary)">
+            <MudPaper Class="pa-4 d-flex align-center gap-4 gv-stat-card gv-accent-primary" Elevation="2">
                 <MudIcon Icon="@Icons.Material.Filled.VideogameAsset" Color="Color.Primary" Size="Size.Large" />
                 <div>
                     <MudText Typo="Typo.h4">@_stats.TotalGames</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">Total Games</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Default">Total Games</MudText>
                 </div>
             </MudPaper>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="3">
-            <MudPaper Class="pa-4 d-flex align-center gap-4" Elevation="2" Style="border-left: 4px solid var(--mud-palette-success)">
+            <MudPaper Class="pa-4 d-flex align-center gap-4 gv-stat-card gv-accent-success" Elevation="2">
                 <MudIcon Icon="@Icons.Material.Filled.Star" Color="Color.Success" Size="Size.Large" />
                 <div>
                     <MudText Typo="Typo.h4">@_stats.AverageRating.ToString("F1")</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">Avg Rating</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Default">Avg Rating</MudText>
                 </div>
             </MudPaper>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="3">
-            <MudPaper Class="pa-4 d-flex align-center gap-4" Elevation="2" Style="border-left: 4px solid var(--mud-palette-info)">
+            <MudPaper Class="pa-4 d-flex align-center gap-4 gv-stat-card gv-accent-info" Elevation="2">
                 <MudIcon Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Info" Size="Size.Large" />
                 <div>
                     <MudText Typo="Typo.h4">@_stats.GamesByStatus.GetValueOrDefault("Playing", 0)</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">Currently Playing</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Default">Currently Playing</MudText>
                 </div>
             </MudPaper>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="3">
-            <MudPaper Class="pa-4 d-flex align-center gap-4" Elevation="2" Style="border-left: 4px solid var(--mud-palette-warning)">
+            <MudPaper Class="pa-4 d-flex align-center gap-4 gv-stat-card gv-accent-warning" Elevation="2">
                 <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Warning" Size="Size.Large" />
                 <div>
                     <MudText Typo="Typo.h4">@_stats.GamesByStatus.GetValueOrDefault("Completed", 0)</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">Completed</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Default">Completed</MudText>
                 </div>
             </MudPaper>
         </MudItem>
@@ -65,7 +65,7 @@ else
     <MudGrid Class="mt-6">
         <MudItem xs="12" md="6">
             <MudPaper Class="pa-4" Elevation="2">
-                <MudText Typo="Typo.h6" Class="mb-4">Top Genres</MudText>
+                <MudText Typo="Typo.h6" Class="mb-4 gv-section-title">Top Genres</MudText>
                 @foreach (var genre in _stats.GamesByGenre)
                 {
                     <div class="mb-3">
@@ -82,7 +82,7 @@ else
 
         <MudItem xs="12" md="6">
             <MudPaper Class="pa-4" Elevation="2">
-                <MudText Typo="Typo.h6" Class="mb-4">Games by Platform</MudText>
+                <MudText Typo="Typo.h6" Class="mb-4 gv-section-title">Games by Platform</MudText>
                 @foreach (var platform in _stats.GamesByPlatform)
                 {
                     <div class="mb-3">
@@ -99,7 +99,7 @@ else
 
         <MudItem xs="12" md="6">
             <MudPaper Class="pa-4" Elevation="2">
-                <MudText Typo="Typo.h6" Class="mb-4">Status Breakdown</MudText>
+                <MudText Typo="Typo.h6" Class="mb-4 gv-section-title">Status Breakdown</MudText>
                 @foreach (var status in _stats.GamesByStatus)
                 {
                     <div class="mb-3">
@@ -116,13 +116,13 @@ else
 
         <MudItem xs="12" md="6">
             <MudPaper Class="pa-4" Elevation="2">
-                <MudText Typo="Typo.h6" Class="mb-4">Quick Actions</MudText>
+                <MudText Typo="Typo.h6" Class="mb-4 gv-section-title">Quick Actions</MudText>
                 <div class="d-flex flex-column gap-3">
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.VideogameAsset"
                                Href="/catalog" FullWidth="true">Browse Game Catalog</MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.FilterList"
+                    <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.FilterList"
                                Href="/catalog?status=Playing" FullWidth="true">Currently Playing</MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.Bookmark"
+                    <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Bookmark"
                                Href="/catalog?status=Backlog" FullWidth="true">View Backlog</MudButton>
                 </div>
             </MudPaper>
@@ -140,9 +140,9 @@ else
 
     private Color GetStatusColor(string status) => status switch
     {
-        "Playing" => Color.Info,
+        "Playing"   => Color.Info,
         "Completed" => Color.Success,
-        "Dropped" => Color.Error,
-        _ => Color.Warning
+        "Dropped"   => Color.Error,
+        _           => Color.Warning
     };
 }

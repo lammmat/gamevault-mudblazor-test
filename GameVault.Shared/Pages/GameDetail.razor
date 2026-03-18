@@ -35,13 +35,11 @@ else
         <!-- Cover art placeholder -->
         <MudItem xs="12" md="4" lg="3">
             <MudPaper Elevation="4" Style="overflow:hidden; border-radius:12px;">
-                <div style="background: linear-gradient(135deg, #1e1e2d 0%, #2d2d4e 50%, #3d2d5e 100%);
-                            height: 380px; display:flex; flex-direction:column;
-                            align-items:center; justify-content:center; padding:24px; text-align:center;">
+                <div class="gv-cover-art" style="height:380px; flex-direction:column; gap:12px; padding:24px; text-align:center;">
                     <MudIcon Icon="@Icons.Material.Filled.VideogameAsset" Size="Size.Large"
-                             Style="font-size:64px; color:#7e6fff; margin-bottom:16px;" />
-                    <MudText Typo="Typo.h6" Style="color:white; word-break:break-word;">@_game.Title</MudText>
-                    <MudText Typo="Typo.caption" Style="color:#aaa; margin-top:8px;">@_game.ReleaseYear</MudText>
+                             Style="font-size:64px; color:var(--gv-primary); opacity:0.8; position:relative; z-index:1;" />
+                    <span class="gv-cover-art-title" style="font-size:1.05rem;">@_game.Title</span>
+                    <MudText Typo="Typo.caption" Style="color:var(--gv-text-dim); position:relative; z-index:1;">@_game.ReleaseYear</MudText>
                 </div>
             </MudPaper>
 

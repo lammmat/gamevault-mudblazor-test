@@ -1,0 +1,348 @@
+/*
+ * GameVault Design System — Pillar 2
+ * CSS custom properties and utility classes.
+ *
+ * HOW TO CUSTOMISE
+ * ─────────────────────────────────────────────────────────────────────────────
+ * 1. Change palette   →  edit the --gv-* variables in :root (dark) and
+ *                        html:not(.gv-dark) (light) below
+ *                        (keep in sync with GameVaultTheme.cs constants)
+ * 2. Change effects   →  edit the .gv-card-hover, .gv-stat-card rules
+ * 3. Change typography→  edit the font-face links in App.razor / index.html
+ *                        and the font stacks in GameVaultTheme.cs Typography
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — DARK MODE DEFAULTS
+   (gvSetDarkMode adds the 'gv-dark' class to <html>; :root serves as default)
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+    /* Primary palette */
+    --gv-primary:           #00E5CC;
+    --gv-primary-dim:       rgba(0, 229, 204, 0.15);
+    --gv-primary-glow:      rgba(0, 229, 204, 0.35);
+    --gv-primary-strong:    rgba(0, 229, 204, 0.60);
+
+    /* Secondary */
+    --gv-secondary:         #FF4D5A;
+    --gv-secondary-dim:     rgba(255, 77, 90, 0.15);
+    --gv-secondary-glow:    rgba(255, 77, 90, 0.35);
+
+    /* Status colors (same across modes) */
+    --gv-success:           #00E599;
+    --gv-warning:           #FFB347;
+    --gv-error:             #FF3B5C;
+    --gv-info:              #4D9FFF;
+
+    /* Backgrounds */
+    --gv-bg:                #08080F;
+    --gv-surface:           #0F0F1A;
+    --gv-surface-raised:    #151525;
+    --gv-drawer:            #06060F;
+
+    /* Text */
+    --gv-text:              rgba(255, 255, 255, 0.92);
+    --gv-text-dim:          rgba(255, 255, 255, 0.50);
+    --gv-text-ghost:        rgba(255, 255, 255, 0.25);
+
+    /* Borders */
+    --gv-border-ghost:      rgba(255, 255, 255, 0.05);
+    --gv-border-subtle:     rgba(255, 255, 255, 0.09);
+    --gv-border-medium:     rgba(255, 255, 255, 0.18);
+    --gv-border-accent:     rgba(0, 229, 204, 0.40);
+
+    /* Shadows */
+    --gv-shadow-card:       0 4px 24px rgba(0, 0, 0, 0.50);
+    --gv-shadow-glow:       0 0 24px var(--gv-primary-glow), 0 8px 32px rgba(0,0,0,0.60);
+    --gv-shadow-glow-strong:0 0 40px var(--gv-primary-strong), 0 12px 48px rgba(0,0,0,0.70);
+
+    /* Cover art gradient stops */
+    --gv-cover-from:        #0A0A18;
+    --gv-cover-mid:         #111128;
+    --gv-cover-to:          #0D0D20;
+
+    /* Transitions */
+    --gv-ease:              cubic-bezier(0.4, 0, 0.2, 1);
+    --gv-ease-out:          cubic-bezier(0.0, 0, 0.2, 1);
+    --gv-ease-spring:       cubic-bezier(0.34, 1.56, 0.64, 1);
+    --gv-t-fast:            0.15s var(--gv-ease);
+    --gv-t-normal:          0.22s var(--gv-ease);
+    --gv-t-slow:            0.35s var(--gv-ease-out);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — LIGHT MODE OVERRIDES
+   Applied when <html> does NOT have the 'gv-dark' class.
+   ═══════════════════════════════════════════════════════════════════════════ */
+html:not(.gv-dark) {
+    /* Primary (muted for legibility on light bg — matches PaletteLight.Primary) */
+    --gv-primary:           #007A6E;
+    --gv-primary-dim:       rgba(0, 122, 110, 0.10);
+    --gv-primary-glow:      rgba(0, 122, 110, 0.22);
+    --gv-primary-strong:    rgba(0, 122, 110, 0.40);
+
+    /* Secondary (matches PaletteLight.Secondary) */
+    --gv-secondary:         #C4202A;
+    --gv-secondary-dim:     rgba(196, 32, 42, 0.10);
+    --gv-secondary-glow:    rgba(196, 32, 42, 0.22);
+
+    /* Backgrounds */
+    --gv-bg:                #F0F0F7;
+    --gv-surface:           #FFFFFF;
+    --gv-surface-raised:    #F5F5FA;
+    --gv-drawer:            #FAFAFA;
+
+    /* Text */
+    --gv-text:              rgba(0, 0, 0, 0.87);
+    --gv-text-dim:          rgba(0, 0, 0, 0.54);
+    --gv-text-ghost:        rgba(0, 0, 0, 0.26);
+
+    /* Borders */
+    --gv-border-ghost:      rgba(0, 0, 0, 0.06);
+    --gv-border-subtle:     rgba(0, 0, 0, 0.10);
+    --gv-border-medium:     rgba(0, 0, 0, 0.20);
+    --gv-border-accent:     rgba(0, 122, 110, 0.35);
+
+    /* Shadows (softer on light) */
+    --gv-shadow-card:       0 2px 16px rgba(0, 0, 0, 0.10);
+    --gv-shadow-glow:       0 0 20px var(--gv-primary-glow), 0 4px 20px rgba(0,0,0,0.10);
+    --gv-shadow-glow-strong:0 0 32px var(--gv-primary-strong), 0 8px 28px rgba(0,0,0,0.14);
+
+    /* Cover art gradient stops */
+    --gv-cover-from:        #E8EAF8;
+    --gv-cover-mid:         #EDEEFF;
+    --gv-cover-to:          #EAEBF8;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GLOBAL RESET / BASE
+   ═══════════════════════════════════════════════════════════════════════════ */
+html, body {
+    font-family: 'Nunito', sans-serif;
+    background-color: var(--gv-bg);
+    color: var(--gv-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle mesh gradient — dark mode only */
+html.gv-dark body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+        radial-gradient(ellipse 80% 50% at 20% 10%,  rgba(0,229,204,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 90%,  rgba(77,159,255,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 50% 50%,  rgba(255,77,90,0.02)  0%, transparent 70%);
+}
+
+/* Subtle mesh gradient — light mode */
+html:not(.gv-dark) body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+        radial-gradient(ellipse 80% 50% at 20% 10%,  rgba(0,122,110,0.05) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 90%,  rgba(77,159,255,0.04) 0%, transparent 60%);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar               { width: 6px; height: 6px; }
+::-webkit-scrollbar-track         { background: transparent; }
+::-webkit-scrollbar-thumb         { background: var(--gv-primary-dim); border: 2px solid transparent; border-radius: 99px; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover   { background: var(--gv-primary-glow); background-clip: content-box; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY CLASSES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Section titles — primary-color left-border accent */
+.gv-section-title {
+    position: relative;
+    padding-left: 14px;
+    letter-spacing: 0.04em;
+}
+.gv-section-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10%;
+    bottom: 10%;
+    width: 3px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--gv-primary), var(--gv-primary-dim));
+}
+
+/* Stat cards — gradient accent strip at top */
+.gv-stat-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--gv-border-ghost) !important;
+    transition: border-color var(--gv-t-normal), box-shadow var(--gv-t-normal);
+}
+.gv-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gv-primary), transparent);
+}
+.gv-stat-card:hover {
+    border-color: var(--gv-border-accent) !important;
+    box-shadow: var(--gv-shadow-glow);
+}
+
+/* Color variants for stat cards */
+.gv-stat-card.gv-accent-primary::before { background: linear-gradient(90deg, var(--gv-primary),   transparent); }
+.gv-stat-card.gv-accent-success::before { background: linear-gradient(90deg, var(--gv-success),   transparent); }
+.gv-stat-card.gv-accent-info::before    { background: linear-gradient(90deg, var(--gv-info),      transparent); }
+.gv-stat-card.gv-accent-warning::before { background: linear-gradient(90deg, var(--gv-warning),   transparent); }
+
+/* Interactive card hover — lift + glow */
+.gv-card-hover {
+    border: 1px solid var(--gv-border-ghost) !important;
+    transition:
+        transform     var(--gv-t-normal),
+        box-shadow    var(--gv-t-normal),
+        border-color  var(--gv-t-normal);
+    cursor: pointer;
+}
+.gv-card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--gv-shadow-glow);
+    border-color: var(--gv-border-accent) !important;
+}
+.gv-card-hover:active {
+    transform: translateY(-2px);
+    box-shadow: var(--gv-shadow-card);
+}
+
+/* Game cover art area */
+.gv-cover-art {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--gv-cover-from) 0%, var(--gv-cover-mid) 50%, var(--gv-cover-to) 100%);
+}
+.gv-cover-art::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 40%, var(--gv-primary-dim) 0%, transparent 70%);
+    pointer-events: none;
+}
+.gv-cover-art-title {
+    position: relative;
+    z-index: 1;
+    color: var(--gv-primary);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
+    text-align: center;
+    padding: 0 16px;
+    word-break: break-word;
+    text-shadow: 0 0 20px var(--gv-primary-glow);
+}
+
+/* Nav link active indicator */
+.mud-nav-link.active {
+    border-right: 3px solid var(--gv-primary) !important;
+    background: var(--gv-primary-dim) !important;
+    color: var(--gv-primary) !important;
+}
+.mud-nav-link.active .mud-icon-root {
+    color: var(--gv-primary) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TYPOGRAPHY OVERRIDES (body / button / caption — not settable via MudTheme)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.mud-typography-body1,
+.mud-typography-body2 {
+    font-family: 'Nunito', sans-serif !important;
+}
+.mud-button-label {
+    font-family: 'Orbitron', sans-serif !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    font-size: 0.72rem !important;
+}
+.mud-typography-caption {
+    font-family: 'Nunito', sans-serif !important;
+}
+.mud-typography-overline {
+    font-family: 'Orbitron', sans-serif !important;
+    letter-spacing: 0.15em !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MUDBLAZOR OVERRIDES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* AppBar — accent bottom border; always has dark background per both palettes */
+.mud-appbar {
+    border-bottom: 1px solid var(--gv-border-accent) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Drawer — subtle right border */
+.mud-drawer {
+    border-right: 1px solid var(--gv-border-subtle) !important;
+}
+
+/* Paper / cards — enforce our surface color in dark mode only */
+html.gv-dark .mud-paper {
+    background-color: var(--gv-surface) !important;
+}
+
+/* Chip tweaks — sharper */
+.mud-chip {
+    font-family: 'Nunito', sans-serif !important;
+    font-weight: 600 !important;
+}
+
+/* Table hover row */
+.mud-table-row:hover td {
+    background: var(--gv-primary-dim) !important;
+}
+
+/* MudProgressLinear track */
+html.gv-dark .mud-progress-linear-background {
+    background-color: rgba(255,255,255,0.06) !important;
+}
+html:not(.gv-dark) .mud-progress-linear-background {
+    background-color: rgba(0,0,0,0.08) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BLAZOR ERROR BOUNDARY
+   ═══════════════════════════════════════════════════════════════════════════ */
+.blazor-error-boundary {
+    background: rgba(255,59,92,0.15);
+    border: 1px solid var(--gv-error);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    color: var(--gv-text);
+}
+.blazor-error-boundary::after {
+    content: "An error has occurred.";
+}

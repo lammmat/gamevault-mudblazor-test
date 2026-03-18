@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>GameVault</title>
     <base href="/" />
-    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+    <link href="_content/GameVault.Shared/css/gamevault.css" rel="stylesheet" />
     <link rel="icon" href="data:,">
 </head>
 
@@ -21,6 +22,7 @@
     </div>
 
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script>window.gvSetDarkMode=function(d){document.documentElement.classList.toggle('gv-dark',d)};</script>
     <script src="_framework/blazor.webview.js" autostart="false"></script>
 </body>
 </html>
