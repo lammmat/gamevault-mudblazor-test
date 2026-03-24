@@ -110,4 +110,29 @@ public class EfGameService(IDbContextFactory<GameDbContext> dbFactory) : IGameSe
         game.Rating = rating;
         await db.SaveChangesAsync();
     }
+
+    public async Task<Game> AddGameAsync(Game game)
+    {
+        game.Id = 0; // Let EF assign the ID
+        using var db = await dbFactory.CreateDbContextAsync();
+        db.Games.Add(game);
+        await db.SaveChangesAsync();
+        return game;
+    }
+
+    public async Task UpdateGameAsync(Game game)
+    {
+        using var db = await dbFactory.CreateDbContextAsync();
+        db.Games.Update(game);
+        await db.SaveChangesAsync();
+    }
+
+    public async Task DeleteGameAsync(int id)
+    {
+        using var db = await dbFactory.CreateDbContextAsync();
+        var game = await db.Games.FindAsync(id);
+        if (game is null) return;
+        db.Games.Remove(game);
+        await db.SaveChangesAsync();
+    }
 }

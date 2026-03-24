@@ -198,4 +198,65 @@ public class MockGameServiceTests
         Assert.Equal(platforms.Count, platforms.Distinct().Count());
         Assert.Equal(platforms, platforms.OrderBy(p => p).ToList());
     }
+
+    // ── AddGameAsync ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task AddGameAsync_AddsGameAndReturnsWithNewId()
+    {
+        var svc = CreateService();
+        var newGame = new Game { Title = "Test Game", Developer = "Dev", Publisher = "Pub", ReleaseYear = 2024 };
+        var added = await svc.AddGameAsync(newGame);
+        Assert.True(added.Id > 0);
+        var all = await svc.GetGamesAsync();
+        Assert.Contains(all, g => g.Id == added.Id && g.Title == "Test Game");
+    }
+
+    [Fact]
+    public async Task AddGameAsync_AssignsUniqueId()
+    {
+        var svc = CreateService();
+        var a = await svc.AddGameAsync(new Game { Title = "A" });
+        var b = await svc.AddGameAsync(new Game { Title = "B" });
+        Assert.NotEqual(a.Id, b.Id);
+    }
+
+    // ── UpdateGameAsync ───────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task UpdateGameAsync_UpdatesAllFields()
+    {
+        var svc = CreateService();
+        var game = await svc.GetByIdAsync(1);
+        Assert.NotNull(game);
+        game.Title = "Updated Title";
+        game.Developer = "New Dev";
+        game.Rating = 5.5;
+        game.Genres = ["Indie"];
+        await svc.UpdateGameAsync(game);
+        var updated = await svc.GetByIdAsync(1);
+        Assert.Equal("Updated Title", updated!.Title);
+        Assert.Equal("New Dev", updated.Developer);
+        Assert.Equal(5.5, updated.Rating);
+        Assert.Contains("Indie", updated.Genres);
+    }
+
+    // ── DeleteGameAsync ───────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task DeleteGameAsync_RemovesGameFromList()
+    {
+        var svc = CreateService();
+        await svc.DeleteGameAsync(1);
+        var all = await svc.GetGamesAsync();
+        Assert.DoesNotContain(all, g => g.Id == 1);
+    }
+
+    [Fact]
+    public async Task DeleteGameAsync_InvalidId_DoesNotThrow()
+    {
+        var svc = CreateService();
+        var ex = await Record.ExceptionAsync(() => svc.DeleteGameAsync(9999));
+        Assert.Null(ex);
+    }
 }

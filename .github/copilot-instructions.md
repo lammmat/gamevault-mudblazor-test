@@ -31,7 +31,7 @@ dotnet run --project GameVault.Maui -f net10.0-windows10.0.19041.0
 
 VS Code launch configs (`F5`): `🌐 GameVault Web` (port 5227) and `🖥️ GameVault MAUI (Windows)`.
 
-There are no test projects or lint configurations.
+Tests live in `GameVault.Tests` — run with `dotnet test GameVault.Tests`. There are no lint configurations.
 
 ## Service Layer
 
@@ -43,9 +43,20 @@ Task<Game?> GetByIdAsync(int id);
 Task<GameStats> GetStatsAsync();
 IReadOnlyList<string> GetAllGenres();
 IReadOnlyList<string> GetAllPlatforms();
+Task<Game> AddGameAsync(Game game);
+Task UpdateGameAsync(Game game);
+Task DeleteGameAsync(int id);
 ```
 
-`MockGameService` is the only implementation (30 hardcoded games, LINQ filtering, `Task.FromResult()` wrappers). To add a real backend, implement `IGameService` and swap the DI registration in both host `Program.cs` / `MauiProgram.cs`.
+### ⚠️ THREE implementations — update ALL of them whenever the interface changes
+
+| Implementation | Location | Used by |
+|---|---|---|
+| `MockGameService` | `GameVault.Shared/Services/MockGameService.cs` | Tests + fallback |
+| `EfGameService` | `GameVault.Web/Services/EfGameService.cs` | Web app (SQLite via EF Core) |
+| `HttpGameService` | `GameVault.Maui/Services/HttpGameService.cs` | MAUI app (calls Web REST API) |
+
+When you add a method to `IGameService`, you **must** implement it in all three classes or the MAUI build will break with `CS0535`.
 
 Inject the service in Razor components with `@inject IGameService GameService`.
 

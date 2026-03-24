@@ -40,6 +40,25 @@ public class HttpGameService(HttpClient http) : IGameService
         await http.PatchAsync($"api/games/{id}/rating", new StringContent(body, Encoding.UTF8, "application/json"));
     }
 
+    public async Task<Game> AddGameAsync(Game game)
+    {
+        var response = await http.PostAsJsonAsync("api/games", game, JsonOptions);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<Game>(JsonOptions) ?? game;
+    }
+
+    public async Task UpdateGameAsync(Game game)
+    {
+        var response = await http.PutAsJsonAsync($"api/games/{game.Id}", game, JsonOptions);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task DeleteGameAsync(int id)
+    {
+        var response = await http.DeleteAsync($"api/games/{id}");
+        response.EnsureSuccessStatusCode();
+    }
+
     private static string BuildGamesUrl(GameFilter? filter)
     {
         if (filter is null) return "api/games";

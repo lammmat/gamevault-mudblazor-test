@@ -1,6 +1,8 @@
 @page "/catalog"
 @inject IGameService GameService
 @inject NavigationManager Nav
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <PageTitle>GameVault – Game Catalog</PageTitle>
 
@@ -51,6 +53,13 @@
     </MudItem>
 </MudGrid>
 
+<!-- Add Game FAB -->
+<MudFab Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+        Style="position:fixed; bottom:32px; right:32px; z-index:1000;
+               box-shadow: 0 0 20px var(--gv-primary-glow), 0 4px 16px rgba(0,0,0,0.5);"
+        OnClick="OpenAddGameDialog"
+        Label="Add Game" />
+
 @code {
     private List<Game> _games = [];
     private bool _loading = true;
@@ -80,5 +89,19 @@
     }
 
     private void NavigateToGame(int id) => Nav.NavigateTo($"/catalog/{id}");
+
+    private async Task OpenAddGameDialog()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<AddEditGameDialog>("", new DialogParameters(), options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+        {
+            _allGenres = GameService.GetAllGenres();
+            _allPlatforms = GameService.GetAllPlatforms();
+            await LoadGames(new GameFilter());
+            Snackbar.Add("Game added to your library!", Severity.Success);
+        }
+    }
 }
 

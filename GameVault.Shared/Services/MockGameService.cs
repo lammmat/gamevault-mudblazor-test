@@ -118,4 +118,37 @@ public class MockGameService : IGameService
         if (game is not null) game.Rating = rating;
         return Task.CompletedTask;
     }
+
+    public Task<Game> AddGameAsync(Game game)
+    {
+        game.Id = _games.Count > 0 ? _games.Max(g => g.Id) + 1 : 1;
+        _games.Add(game);
+        return Task.FromResult(game);
+    }
+
+    public Task UpdateGameAsync(Game game)
+    {
+        var existing = _games.FirstOrDefault(g => g.Id == game.Id);
+        if (existing is not null)
+        {
+            existing.Title = game.Title;
+            existing.Description = game.Description;
+            existing.Developer = game.Developer;
+            existing.Publisher = game.Publisher;
+            existing.ReleaseYear = game.ReleaseYear;
+            existing.Rating = game.Rating;
+            existing.Genres = game.Genres;
+            existing.Platforms = game.Platforms;
+            existing.Tags = game.Tags;
+            existing.Status = game.Status;
+        }
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteGameAsync(int id)
+    {
+        var game = _games.FirstOrDefault(g => g.Id == id);
+        if (game is not null) _games.Remove(game);
+        return Task.CompletedTask;
+    }
 }

@@ -87,6 +87,25 @@ api.MapPatch("{id:int}/rating", async (int id, RatingUpdateRequest req, IGameSer
     return Results.NoContent();
 });
 
+api.MapPost("", async (Game game, IGameService svc) =>
+{
+    var created = await svc.AddGameAsync(game);
+    return Results.Created($"/api/games/{created.Id}", created);
+});
+
+api.MapPut("{id:int}", async (int id, Game game, IGameService svc) =>
+{
+    game.Id = id;
+    await svc.UpdateGameAsync(game);
+    return Results.NoContent();
+});
+
+api.MapDelete("{id:int}", async (int id, IGameService svc) =>
+{
+    await svc.DeleteGameAsync(id);
+    return Results.NoContent();
+});
+
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()

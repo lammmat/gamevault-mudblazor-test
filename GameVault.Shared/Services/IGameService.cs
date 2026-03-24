@@ -11,4 +11,7 @@ public interface IGameService
     IReadOnlyList<string> GetAllPlatforms();
     Task UpdateStatusAsync(int id, GameStatus status);
     Task UpdateRatingAsync(int id, double rating);
+    Task<Game> AddGameAsync(Game game);
+    Task UpdateGameAsync(Game game);
+    Task DeleteGameAsync(int id);
 }

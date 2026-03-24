@@ -38,7 +38,7 @@ Both apps use **EF Core 10 + SQLite** via `EfGameService`. There is no external 
 |---|---|---|
 | Transport | In-process EF Core | In-process EF Core |
 | DB path | `gamevault.db` at repo root | same `gamevault.db` at repo root |
-| API | 7 Minimal API endpoints (`/api/games/…`) | not needed — direct service call |
+| API | 10 Minimal API endpoints (`/api/games/…`) | not needed — direct service call |
 | First run | Seeds from `MockGameService` (30 games) | same seed logic |
 
 The database file (`gamevault.db`) is git-ignored. Delete it to re-seed from scratch.
@@ -49,11 +49,14 @@ The database file (`gamevault.db`) is git-ignored. Delete it to re-seed from scr
 |--------|-------|-------------|
 | `GET` | `/api/games` | List games (search, filter, sort) |
 | `GET` | `/api/games/{id}` | Get single game |
-| `POST` | `/api/games/{id}/status` | Update play status |
-| `POST` | `/api/games/{id}/rating` | Update rating |
 | `GET` | `/api/games/genres` | All distinct genres |
 | `GET` | `/api/games/platforms` | All distinct platforms |
 | `GET` | `/api/games/stats` | Dashboard statistics |
+| `POST` | `/api/games` | Add a new game |
+| `PUT` | `/api/games/{id}` | Update all fields of a game |
+| `DELETE` | `/api/games/{id}` | Remove a game |
+| `PATCH` | `/api/games/{id}/status` | Update play status |
+| `PATCH` | `/api/games/{id}/rating` | Update rating |
 
 ## Design System — "VAULT OS"
 
@@ -117,8 +120,8 @@ dotnet run --project GameVault.Maui -f net10.0-windows10.0.19041.0
 | Route           | Description                                                                              |
 | --------------- | ---------------------------------------------------------------------------------------- |
 | `/`             | **Dashboard** — stat cards, genre/platform bars, status breakdown, quick action buttons  |
-| `/catalog`      | **Game Catalog** — search, filter by genre/platform/rating, toggle grid ↔ list view      |
-| `/catalog/{id}` | **Game Detail** — full info, **editable status & star rating** (persisted to SQLite)     |
+| `/catalog`      | **Game Catalog** — search, filter by genre/platform/rating, toggle grid ↔ list view; **Add Game** FAB |
+| `/catalog/{id}` | **Game Detail** — full info, editable status & star rating; **Edit** and **Delete** buttons |
 
 ## MudBlazor Components Used
 
@@ -136,6 +139,8 @@ dotnet run --project GameVault.Maui -f net10.0-windows10.0.19041.0
 | `MudSkeleton`                              | Loading states                    |
 | `MudProgressLinear`                        | Status breakdown bars             |
 | `MudSnackbar`                              | Save confirmation toasts          |
+| `MudFab`                                   | "Add Game" floating action button |
+| `MudDialog`, `MudDialogProvider`           | Add/Edit game dialog              |
 | `MudSnackbarProvider`, `MudDialogProvider` | Global providers in layout        |
 
 ## Testing
@@ -152,23 +157,25 @@ dotnet test GameVault.Tests
 
 ```
 GameVault.Tests/
-├── MudBlazorTestBase.cs          ← shared bUnit base class (see "Learnings" below)
+├── MudBlazorTestBase.cs             ← shared bUnit base class (see "Learnings" below)
 ├── Services/
-│   └── MockGameServiceTests.cs   ← pure C# unit tests (no Blazor)
+│   └── MockGameServiceTests.cs      ← pure C# unit tests (no Blazor)
 └── Components/
     ├── GameCardTests.cs
     ├── GameGridTests.cs
     ├── DashboardTests.cs
-    └── CatalogFilterPanelTests.cs
+    ├── CatalogFilterPanelTests.cs
+    └── AddEditGameDialogTests.cs
 ```
 
 | File | What it tests |
 |------|--------------|
-| `MockGameServiceTests` | Filtering, sorting, stats, CRUD mutations |
+| `MockGameServiceTests` | Filtering, sorting, stats, full CRUD (add/update/delete) |
 | `GameCardTests` | Renders title/rating, genre/platform limits, click callback |
 | `GameGridTests` | Card count, empty list, click event propagation |
 | `DashboardTests` | Stat values displayed after async load, with a Moq mock |
 | `CatalogFilterPanelTests` | Select items rendered, reset callback fires |
+| `AddEditGameDialogTests` | Add/Edit mode titles, field pre-population, service invocation |
 
 ### bUnit vs React Testing Library — Cheatsheet
 
@@ -225,12 +232,27 @@ Assert.Contains("Action", items.Select(i => i.Instance.Value));
 
 #### 5. Culture-safe number assertions
 
-`ToString("F1")` is culture-sensitive — `8.5` becomes `8,5` on German Windows. Hardcoding `"8.5"` in assertions will fail on machines with non-English locale.
+`ToString("F1")` is culture-sensitive
 
 **Fix:** use the same format call in the assertion as the component does:
 
 ```csharp
 Assert.Contains(game.Rating.ToString("F1"), cut.Markup); // matches whatever culture renders
+```
+
+#### 6. `MudDialog` sections only render inside `MudDialogProvider`
+
+`TitleContent`, `DialogContent`, and `DialogActions` render slots do **not** produce markup when a `MudDialog` is rendered directly via `Render<MyDialog>()`. The content is invisible, `@ref` fields (like `MudForm`) remain null, and `FindComponent` calls fail.
+
+**Fix:** use the full dialog infrastructure:
+
+```csharp
+var provider = Render<MudDialogProvider>();
+var dialogService = Services.GetRequiredService<IDialogService>();
+IDialogReference? dialogRef = null;
+await provider.InvokeAsync(async () =>
+    dialogRef = await dialogService.ShowAsync<AddEditGameDialog>("Title", parameters));
+var dialog = provider.FindComponent<AddEditGameDialog>();
 ```
 
 ## React → Blazor Cheatsheet

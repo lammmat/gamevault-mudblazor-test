@@ -1,0 +1,386 @@
+@using GameVault.Shared.Models
+@using GameVault.Shared.Services
+@inject IGameService GameService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <div class="gv-ded-header">
+            <div class="gv-ded-icon-box">
+                <MudIcon Icon="@(IsEditMode ? Icons.Material.Filled.Edit : Icons.Material.Filled.AddBox)"
+                         Style="color:var(--gv-primary); font-size:1.25rem;" />
+            </div>
+            <div>
+                <MudText Typo="Typo.overline" Style="color:var(--gv-text-dim); letter-spacing:0.15em; line-height:1; display:block; font-size:0.6rem;">
+                    GAME LIBRARY
+                </MudText>
+                <MudText Typo="Typo.h6" Style="font-family:'Orbitron',sans-serif; letter-spacing:0.06em; color:var(--gv-primary); line-height:1.2;">
+                    @(IsEditMode ? "EDIT GAME" : "ADD GAME")
+                </MudText>
+            </div>
+        </div>
+    </TitleContent>
+
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="_formIsValid">
+
+            <!-- Live preview strip -->
+            <div class="gv-ded-preview mb-5">
+                <div class="gv-ded-preview-art">
+                    <MudIcon Icon="@Icons.Material.Filled.VideogameAsset"
+                             Style="font-size:1.8rem; color:var(--gv-primary); opacity:0.7; position:relative; z-index:1;" />
+                    <span class="gv-ded-preview-title">@(_model.Title.Length > 0 ? _model.Title : "UNTITLED")</span>
+                </div>
+                <div class="gv-ded-preview-chips">
+                    @if (_selectedGenres.Count > 0)
+                    {
+                        <div class="d-flex flex-wrap gap-1 mb-1">
+                            @foreach (var g in _selectedGenres.Take(3))
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">@g</MudChip>
+                            }
+                        </div>
+                    }
+                    @if (_selectedPlatforms.Count > 0)
+                    {
+                        <div class="d-flex flex-wrap gap-1">
+                            @foreach (var p in _selectedPlatforms.Take(3))
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">@p</MudChip>
+                            }
+                        </div>
+                    }
+                    @if (_selectedGenres.Count == 0 && _selectedPlatforms.Count == 0)
+                    {
+                        <MudText Typo="Typo.caption" Style="color:var(--gv-text-ghost);">Select genres and platforms below</MudText>
+                    }
+                </div>
+                @if (_model.ReleaseYear > 0)
+                {
+                    <div class="gv-ded-preview-year">@_model.ReleaseYear</div>
+                }
+            </div>
+
+            <!-- ── GAME IDENTITY ── -->
+            <div class="gv-ded-section mb-4">
+                <MudText Typo="Typo.overline" Class="gv-ded-section-label">GAME IDENTITY</MudText>
+                <MudTextField @bind-Value="_model.Title"
+                              Label="Title" Variant="Variant.Outlined"
+                              Required="true" RequiredError="Title is required"
+                              FullWidth="true" Class="mb-3" />
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="_model.Developer"
+                                      Label="Developer" Variant="Variant.Outlined" FullWidth="true" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField @bind-Value="_model.Publisher"
+                                      Label="Publisher" Variant="Variant.Outlined" FullWidth="true" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudNumericField T="int" @bind-Value="_model.ReleaseYear"
+                                         Label="Release Year" Variant="Variant.Outlined"
+                                         Min="1970" Max="2030" FullWidth="true" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudNumericField T="double" @bind-Value="_model.Rating"
+                                         Label="Rating (0 – 10)" Variant="Variant.Outlined"
+                                         Min="0" Max="10" Step="0.1" Format="F1" FullWidth="true" />
+                    </MudItem>
+                </MudGrid>
+            </div>
+
+            <!-- ── LIBRARY STATUS ── -->
+            <div class="gv-ded-section mb-4">
+                <MudText Typo="Typo.overline" Class="gv-ded-section-label">LIBRARY STATUS</MudText>
+                <MudSelect T="GameStatus" @bind-Value="_model.Status"
+                           Label="Status" Variant="Variant.Outlined" FullWidth="true">
+                    @foreach (GameStatus s in Enum.GetValues<GameStatus>())
+                    {
+                        <MudSelectItem Value="s">
+                            <div class="d-flex align-center gap-2">
+                                <MudIcon Icon="@GetStatusIcon(s)" Size="Size.Small"
+                                         Style="@($"color:{GetStatusCssColor(s)}")" />
+                                @s
+                            </div>
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            </div>
+
+            <!-- ── GENRES ── -->
+            <div class="gv-ded-section mb-4">
+                <MudText Typo="Typo.overline" Class="gv-ded-section-label">GENRES</MudText>
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                    @foreach (var genre in _availableGenres)
+                    {
+                        var g = genre;
+                        var selected = _selectedGenres.Contains(g);
+                        <MudChip T="string"
+                                 Color="@(selected ? Color.Primary : Color.Default)"
+                                 Variant="@(selected ? Variant.Filled : Variant.Outlined)"
+                                 Size="Size.Small"
+                                 Class="@(selected ? "gv-ded-chip-active" : "gv-ded-chip-inactive")"
+                                 OnClick="@(() => ToggleGenre(g))">
+                            @g
+                        </MudChip>
+                    }
+                </div>
+                <MudTextField @bind-Value="_customGenre"
+                              Label="Add custom genre" Variant="Variant.Outlined" Margin="Margin.Dense"
+                              Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add"
+                              AdornmentColor="Color.Primary"
+                              OnAdornmentClick="AddCustomGenre"
+                              @onkeyup="@(e => { if (e.Key == "Enter") AddCustomGenre(); })" />
+            </div>
+
+            <!-- ── PLATFORMS ── -->
+            <div class="gv-ded-section mb-4">
+                <MudText Typo="Typo.overline" Class="gv-ded-section-label">PLATFORMS</MudText>
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                    @foreach (var platform in _availablePlatforms)
+                    {
+                        var p = platform;
+                        var selected = _selectedPlatforms.Contains(p);
+                        <MudChip T="string"
+                                 Color="@(selected ? Color.Secondary : Color.Default)"
+                                 Variant="@(selected ? Variant.Filled : Variant.Outlined)"
+                                 Size="Size.Small"
+                                 Class="@(selected ? "gv-ded-chip-active" : "gv-ded-chip-inactive")"
+                                 OnClick="@(() => TogglePlatform(p))">
+                            <div class="d-flex align-center gap-1">
+                                <MudIcon Icon="@GetPlatformIcon(p)" Size="Size.Small" />
+                                @p
+                            </div>
+                        </MudChip>
+                    }
+                </div>
+                <MudTextField @bind-Value="_customPlatform"
+                              Label="Add custom platform" Variant="Variant.Outlined" Margin="Margin.Dense"
+                              Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add"
+                              AdornmentColor="Color.Primary"
+                              OnAdornmentClick="AddCustomPlatform"
+                              @onkeyup="@(e => { if (e.Key == "Enter") AddCustomPlatform(); })" />
+            </div>
+
+            <!-- ── TAGS ── -->
+            <div class="gv-ded-section mb-4">
+                <MudText Typo="Typo.overline" Class="gv-ded-section-label">TAGS</MudText>
+                @if (_tags.Count > 0)
+                {
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                        @foreach (var tag in _tags.ToList())
+                        {
+                            var t = tag;
+                            <MudChip T="string" Value="@t" Size="Size.Small"
+                                     Variant="Variant.Text"
+                                     OnClose="OnTagChipClosed">
+                                @t
+                            </MudChip>
+                        }
+                    </div>
+                }
+                <MudTextField @bind-Value="_newTag"
+                              Label="Add tag (e.g. Singleplayer, Co-op)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                              Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Add"
+                              AdornmentColor="Color.Primary"
+                              OnAdornmentClick="AddTag"
+                              @onkeyup="@(e => { if (e.Key == "Enter") AddTag(); })" />
+            </div>
+
+            <!-- ── DESCRIPTION ── -->
+            <div class="gv-ded-section">
+                <MudText Typo="Typo.overline" Class="gv-ded-section-label">DESCRIPTION</MudText>
+                <MudTextField @bind-Value="_model.Description"
+                              Label="About this game" Variant="Variant.Outlined"
+                              Lines="4" FullWidth="true" />
+            </div>
+
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <div class="gv-ded-actions">
+            <MudButton OnClick="Cancel" Variant="Variant.Text" Class="gv-ded-cancel-btn">
+                CANCEL
+            </MudButton>
+            <MudButton OnClick="Submit" Color="Color.Primary" Variant="Variant.Filled"
+                       Disabled="@(!_formIsValid || _saving)"
+                       StartIcon="@(IsEditMode ? Icons.Material.Filled.Save : Icons.Material.Filled.AddBox)"
+                       Class="gv-ded-save-btn">
+                @(_saving ? "SAVING…" : IsEditMode ? "SAVE CHANGES" : "ADD GAME")
+            </MudButton>
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Game? ExistingGame { get; set; }
+
+    private bool IsEditMode => ExistingGame is not null;
+
+    private MudForm _form = null!;
+    private bool _formIsValid;
+    private bool _saving;
+
+    private Game _model = new();
+    private HashSet<string> _selectedGenres = [];
+    private HashSet<string> _selectedPlatforms = [];
+    private List<string> _tags = [];
+    private string _newTag = "";
+    private string _customGenre = "";
+    private string _customPlatform = "";
+    private List<string> _availableGenres = [];
+    private List<string> _availablePlatforms = [];
+
+    protected override void OnInitialized()
+    {
+        _availableGenres = new List<string>(GameService.GetAllGenres());
+        _availablePlatforms = new List<string>(GameService.GetAllPlatforms());
+
+        if (ExistingGame is not null)
+        {
+            _model = new Game
+            {
+                Id = ExistingGame.Id,
+                Title = ExistingGame.Title,
+                Description = ExistingGame.Description,
+                Developer = ExistingGame.Developer,
+                Publisher = ExistingGame.Publisher,
+                ReleaseYear = ExistingGame.ReleaseYear,
+                Rating = ExistingGame.Rating,
+                Status = ExistingGame.Status,
+                Genres = [.. ExistingGame.Genres],
+                Platforms = [.. ExistingGame.Platforms],
+                Tags = [.. ExistingGame.Tags],
+            };
+            _selectedGenres = [.. ExistingGame.Genres];
+            _selectedPlatforms = [.. ExistingGame.Platforms];
+            _tags = [.. ExistingGame.Tags];
+
+            // Surface any custom genres/platforms from the existing game
+            foreach (var g in ExistingGame.Genres)
+                if (!_availableGenres.Any(x => string.Equals(x, g, StringComparison.OrdinalIgnoreCase)))
+                    _availableGenres.Add(g);
+            foreach (var p in ExistingGame.Platforms)
+                if (!_availablePlatforms.Any(x => string.Equals(x, p, StringComparison.OrdinalIgnoreCase)))
+                    _availablePlatforms.Add(p);
+        }
+        else
+        {
+            _model = new Game { ReleaseYear = DateTime.Now.Year };
+        }
+    }
+
+    private void ToggleGenre(string genre)
+    {
+        if (!_selectedGenres.Remove(genre))
+            _selectedGenres.Add(genre);
+    }
+
+    private void TogglePlatform(string platform)
+    {
+        if (!_selectedPlatforms.Remove(platform))
+            _selectedPlatforms.Add(platform);
+    }
+
+    private void AddCustomGenre()
+    {
+        var g = _customGenre.Trim();
+        if (string.IsNullOrWhiteSpace(g)) return;
+        if (!_availableGenres.Any(x => string.Equals(x, g, StringComparison.OrdinalIgnoreCase)))
+            _availableGenres.Add(g);
+        _selectedGenres.Add(g);
+        _customGenre = "";
+    }
+
+    private void AddCustomPlatform()
+    {
+        var p = _customPlatform.Trim();
+        if (string.IsNullOrWhiteSpace(p)) return;
+        if (!_availablePlatforms.Any(x => string.Equals(x, p, StringComparison.OrdinalIgnoreCase)))
+            _availablePlatforms.Add(p);
+        _selectedPlatforms.Add(p);
+        _customPlatform = "";
+    }
+
+    private void AddTag()
+    {
+        var t = _newTag.Trim();
+        if (!string.IsNullOrWhiteSpace(t) && !_tags.Any(x => string.Equals(x, t, StringComparison.OrdinalIgnoreCase)))
+            _tags.Add(t);
+        _newTag = "";
+    }
+
+    private void OnTagChipClosed(MudChip<string> chip) => _tags.Remove(chip.Value ?? "");
+
+    private void Cancel() => MudDialog.Cancel();
+
+    // Test-only: directly invokes save logic, bypassing MudForm validation.
+    internal async Task TriggerSubmitForTest()
+    {
+        _model.Genres = [.. _selectedGenres];
+        _model.Platforms = [.. _selectedPlatforms];
+        _model.Tags = [.. _tags];
+
+        if (IsEditMode)
+            await GameService.UpdateGameAsync(_model);
+        else
+            _model = await GameService.AddGameAsync(_model);
+
+        MudDialog.Close(DialogResult.Ok(_model));
+    }
+
+    private async Task Submit()
+    {
+        await _form.ValidateAsync();
+        if (!_formIsValid) return;
+
+        _saving = true;
+        _model.Genres = [.. _selectedGenres];
+        _model.Platforms = [.. _selectedPlatforms];
+        _model.Tags = [.. _tags];
+
+        try
+        {
+            if (IsEditMode)
+                await GameService.UpdateGameAsync(_model);
+            else
+                _model = await GameService.AddGameAsync(_model);
+
+            MudDialog.Close(DialogResult.Ok(_model));
+        }
+        catch
+        {
+            Snackbar.Add("Failed to save game. Please try again.", Severity.Error);
+            _saving = false;
+        }
+    }
+
+    private static string GetStatusIcon(GameStatus status) => status switch
+    {
+        GameStatus.Playing   => Icons.Material.Filled.PlayCircle,
+        GameStatus.Completed => Icons.Material.Filled.CheckCircle,
+        GameStatus.Dropped   => Icons.Material.Filled.Cancel,
+        _                    => Icons.Material.Filled.AddCircleOutline
+    };
+
+    private static string GetStatusCssColor(GameStatus status) => status switch
+    {
+        GameStatus.Playing   => "var(--gv-info)",
+        GameStatus.Completed => "var(--gv-success)",
+        GameStatus.Dropped   => "var(--gv-error)",
+        _                    => "var(--gv-warning)"
+    };
+
+    private static string GetPlatformIcon(string platform) => platform switch
+    {
+        "PC"              => Icons.Material.Filled.Computer,
+        "PlayStation"     => Icons.Material.Filled.Gamepad,
+        "Xbox"            => Icons.Material.Filled.SportsEsports,
+        "Nintendo Switch" => Icons.Material.Filled.VideogameAsset,
+        "Mobile"          => Icons.Material.Filled.PhoneAndroid,
+        _                 => Icons.Material.Filled.Devices
+    };
+}
