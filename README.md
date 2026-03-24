@@ -138,6 +138,101 @@ dotnet run --project GameVault.Maui -f net10.0-windows10.0.19041.0
 | `MudSnackbar`                              | Save confirmation toasts          |
 | `MudSnackbarProvider`, `MudDialogProvider` | Global providers in layout        |
 
+## Testing
+
+The project uses **xUnit** for unit tests and **bUnit** for Blazor component tests — bUnit is the de-facto standard for testing Blazor components, roughly analogous to React Testing Library.
+
+### Running tests
+
+```bash
+dotnet test GameVault.Tests
+```
+
+### Test structure
+
+```
+GameVault.Tests/
+├── MudBlazorTestBase.cs          ← shared bUnit base class (see "Learnings" below)
+├── Services/
+│   └── MockGameServiceTests.cs   ← pure C# unit tests (no Blazor)
+└── Components/
+    ├── GameCardTests.cs
+    ├── GameGridTests.cs
+    ├── DashboardTests.cs
+    └── CatalogFilterPanelTests.cs
+```
+
+| File | What it tests |
+|------|--------------|
+| `MockGameServiceTests` | Filtering, sorting, stats, CRUD mutations |
+| `GameCardTests` | Renders title/rating, genre/platform limits, click callback |
+| `GameGridTests` | Card count, empty list, click event propagation |
+| `DashboardTests` | Stat values displayed after async load, with a Moq mock |
+| `CatalogFilterPanelTests` | Select items rendered, reset callback fires |
+
+### bUnit vs React Testing Library — Cheatsheet
+
+| React Testing Library               | bUnit (Blazor)                                                             |
+| ----------------------------------- | -------------------------------------------------------------------------- |
+| `render(<MyComp prop={val} />)`     | `Render<MyComp>(p => p.Add(c => c.Prop, val))`                             |
+| `screen.getByText("hello")`         | `cut.Find("css-selector")` / `Assert.Contains("hello", cut.Markup)`       |
+| `fireEvent.click(el)`               | `cut.Find("button").Click()` (wrap in `InvokeAsync` for async events)      |
+| `jest.fn()` / `vi.fn()`             | `EventCallback.Factory.Create<T>(this, handler)` as parameter              |
+| `jest.mock('./service')`            | `new Mock<IService>()` (Moq) + `Services.AddSingleton<IService>(mock.Object)` |
+| `waitFor(() => expect(…))`          | `await cut.WaitForStateAsync(() => cut.Markup.Contains(…))`               |
+| `screen.getAllByRole("option")`     | `cut.FindComponents<MudSelectItem<string>>()`                              |
+
+### Learnings & gotchas — bUnit with MudBlazor 9.x
+
+These tripped us up so you don't have to rediscover them:
+
+#### 1. `MudPopoverProvider` must be in the render tree
+
+MudBlazor components that open floating elements (`MudSelect`, `MudAutocomplete`, `MudMenu`, …) call into `PopoverService` on init. Without `MudPopoverProvider` rendered first, every such test throws:
+
+```
+InvalidOperationException: Missing <MudPopoverProvider />
+```
+
+**Fix:** render it once before the component under test. In `MudBlazorTestBase` this is done inside `IAsyncLifetime.InitializeAsync()` (see point 3 for why not in the constructor).
+
+#### 2. MudBlazor 9.x services are `IAsyncDisposable`-only
+
+`KeyInterceptorService` and `PointerEventsNoneService` (registered by `AddMudServices()`) only implement `IAsyncDisposable`, not `IDisposable`. When bUnit/xUnit sync-disposes the test class at the end of a test, the DI container throws:
+
+```
+InvalidOperationException: 'MudBlazor.KeyInterceptorService' type only implements IAsyncDisposable. Use DisposeAsync to dispose the container.
+```
+
+**Fix:** implement `IAsyncLifetime` on test classes, call `await DisposeAsync()` in `DisposeAsync()`, and override `Dispose(bool)` to be a no-op so the sync path is suppressed. This is encapsulated in `MudBlazorTestBase`.
+
+#### 3. Register mock services *before* any `Render<>()` call
+
+`BunitContext` lazily builds the DI container on the first `Render<>()`. Anything added to `Services` *after* that call is invisible to rendered components.
+
+**Fix:** in `MudBlazorTestBase`, `AddMudServices()` runs in the constructor (before subclasses add their own mocks), and `Render<MudPopoverProvider>()` runs in `InitializeAsync()` — which xUnit calls *after* the subclass constructor finishes.
+
+#### 4. MudSelect items live in a popover, not in `cut.Markup`
+
+`MudSelect` renders its `MudSelectItem` children inside a `MudPopover` that is collapsed by default. Checking `cut.Markup` for option text will fail — the text isn't there.
+
+**Fix:** query the component tree instead:
+
+```csharp
+var items = cut.FindComponents<MudSelectItem<string>>();
+Assert.Contains("Action", items.Select(i => i.Instance.Value));
+```
+
+#### 5. Culture-safe number assertions
+
+`ToString("F1")` is culture-sensitive — `8.5` becomes `8,5` on German Windows. Hardcoding `"8.5"` in assertions will fail on machines with non-English locale.
+
+**Fix:** use the same format call in the assertion as the component does:
+
+```csharp
+Assert.Contains(game.Rating.ToString("F1"), cut.Markup); // matches whatever culture renders
+```
+
 ## React → Blazor Cheatsheet
 
 | React                        | Blazor                                                                   |
